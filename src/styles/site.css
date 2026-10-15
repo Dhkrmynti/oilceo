@@ -475,7 +475,8 @@ em {
 .head__t {
   font: 850 clamp(36px, 5.6vw, 72px) / 0.98 var(--sans);
   font-stretch: 80%;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.005em;
+  word-spacing: 0.12em;
   text-wrap: balance;
 }
 
@@ -564,7 +565,8 @@ em {
 .hero__h {
   font: 900 clamp(44px, 5.5vw, 82px) / 0.92 var(--sans);
   font-stretch: 74%;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.005em;
+  word-spacing: 0.12em;
   text-wrap: balance;
 }
 
@@ -775,6 +777,25 @@ em {
   opacity: 0.6;
 }
 
+.meter dd small.is-under {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.meter__next {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(242, 234, 216, 0.6);
+}
+
+.meter__cell.is-alarm .meter__next {
+  color: var(--red);
+}
+
 .meter .is-gold {
   color: var(--gold);
 }
@@ -892,11 +913,18 @@ em {
 @media (max-width: 900px) {
   .hero {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "copy" "scene" "strip";
-    padding-top: calc(var(--bar) + 28px);
+    grid-template-areas: "scene" "copy" "strip";
+    padding-top: calc(var(--bar) + 8px);
+    gap: 20px;
+  }
+  /* on a phone the barrel comes first, edge to edge: it is the picture people remember */
+  .hero__scene {
+    margin: 0 calc(var(--gutter) * -1);
   }
   .office {
     max-height: none;
+    width: 112%;
+    margin-left: -6%;
   }
 }
 
@@ -1431,8 +1459,7 @@ em {
 /* ───────── toasts ───────── */
 
 .toast,
-.markbar,
-.siren {
+.markbar {
   position: fixed;
   z-index: 45;
   left: 50%;
@@ -1493,30 +1520,134 @@ em {
   background: var(--red);
 }
 
-.siren {
-  top: calc(var(--bar) + 14px);
-  bottom: auto;
-  background: var(--red);
-  color: #1a0805;
-  border: 0;
-  animation: rise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), siren-flash 0.5s steps(1) 6;
+/* the emergency meeting: the whole screen, for a few seconds */
+
+.meeting {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
 }
 
-.siren__icon {
-  font-size: 22px;
+.meeting__scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(110, 12, 5, 0.96), rgba(22, 3, 1, 0.98));
+  animation: meeting-flash 0.45s steps(1) 5, fade 0.2s ease-out;
 }
 
-@keyframes siren-flash {
+@keyframes meeting-flash {
   50% {
-    background: #1a0805;
-    color: var(--red);
+    background: rgba(255, 74, 46, 0.9);
   }
+}
+
+.meeting__card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(720px, 100%);
+  text-align: center;
+  color: var(--ivory);
+}
+
+.meeting__k {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--red);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  animation: blink 0.8s steps(1) infinite;
+}
+
+.meeting__stamp {
+  padding: 10px 22px;
+  border: 5px solid var(--ivory);
+  font: 900 clamp(34px, 7vw, 76px) / 0.95 var(--sans);
+  font-stretch: 70%;
+  letter-spacing: 0.02em;
+  word-spacing: 0.1em;
+  text-transform: uppercase;
+  transform: rotate(-4deg);
+  animation: slam 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+@keyframes slam {
+  from {
+    transform: rotate(8deg) scale(2.6);
+    opacity: 0;
+  }
+}
+
+.meeting__eth {
+  margin-top: 10px;
+  font-size: clamp(44px, 9vw, 88px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 0 40px rgba(224, 176, 74, 0.5);
+  animation: lift 0.5s 0.3s both;
+}
+
+@keyframes lift {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+}
+
+.meeting__eth small {
+  font-size: 0.4em;
+}
+
+.meeting__line {
+  font-size: 18px;
+  opacity: 0.85;
+}
+
+.meeting__flags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 14px 0 6px;
+}
+
+.meeting__flags li {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  font-size: 11px;
+  opacity: 0.8;
+  animation: drop-in 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+
+.meeting__flags .flag {
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes drop-in {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+
+.meeting__x {
+  margin-top: 8px;
 }
 
 @media (max-width: 560px) {
   .toast,
-  .markbar,
-  .siren {
+  .markbar {
     flex-wrap: wrap;
   }
 }

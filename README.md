@@ -6,7 +6,11 @@ target the Board holds an **emergency meeting** on-chain and the ETH goes straig
 wallets that never sold**; the next fill goes to the treasury, then the Board again. Every buy pumps one
 numbered barrel out of a well of 5,000. Lore: `CONCEPT.md`. Design: `DESIGN.md`.
 
-The engine in `bot/` is the one from `../burn-sawit` (itself from `../token-menkrep` and `../token2`).
+The engine in `bot/` is the `../token2` ($HANG, Hang On) engine plus the barrel layer from `../burn-sawit`
+(`bot/forest.ts`, `bot/cards.ts`, `bot/xpost.ts`). Diffed against token2: `xlink.ts` and `uniswap-v4.ts`
+are identical, and the claim/pay/treasury logic in `pads-engine.ts` and `store.ts` is the same; the
+differences are names, the port, banned name words and the barrel layer. The VPS scripts in `scripts/`
+come from token2 too (see `DEPLOY-VPS.md`).
 Changed: the token name in logs and signed texts, the default port (5043), the card drawing (the barrel),
 the barrel routes (`/barrel/<n>`, `/api/barrel/<n>`, `/api/card/barrel/<n>.png`), and env aliases
 (`WELL_BARRELS`, `BARREL_MIN_TOKENS`). Nothing that claims or sends ETH was changed. The well is still
@@ -37,6 +41,11 @@ draws the same card as the link preview of `/barrel/<n>` and of the site (`/api/
 - No token, domain, X account or server yet. `X_URL` in `src/lib/api.ts` is empty. `public/terms.html`
   and `public/privacy.html` say `your-domain.example`.
 - Not tested against a live token yet: the buy detection should be checked on the first real buys.
+
+## Deploy
+
+See `DEPLOY-VPS.md` (Indonesian): `DOMAIN=example.com sh scripts/install-server.sh` on the server,
+`scripts/site-mode.sh demo|live`, and `scripts/postlaunch-check.sh` after launch.
 
 ## Launch checklist
 

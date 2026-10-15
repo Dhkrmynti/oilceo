@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ArrowUpRight, CaretLeft, CaretRight, MagnifyingGlass, X as Close, XLogo } from "@phosphor-icons/react";
-import { DEMO, addrUrl, amount, bylineNonce, claimByline, demoSaveByline, eth, fetchWallet, short, startXLink, txUrl, unlinkX, type WalletInfo } from "../lib/api";
+import { DEMO, addrUrl, amount, type Pond, bylineNonce, claimByline, demoSaveByline, eth, fetchWallet, short, startXLink, txUrl, unlinkX, type WalletInfo } from "../lib/api";
 import { nameFor } from "../lib/alias";
 import { Countdown, Held } from "../lib/clock";
 import { TICKER } from "../lib/brand";
@@ -342,9 +342,10 @@ export function BadgeDrawer() {
 }
 
 /** The accreditation desk: a delegate pass on a lanyard, with a blank to fill. Looking a wallet up opens its record. */
-export function CredentialsSection() {
+export function CredentialsSection({ pond, live }: { pond: Pond | null; live: boolean }) {
   const root = useRef<HTMLElement>(null);
   const account = useAccount();
+  const seated = live ? (pond?.rows ?? []).filter((r) => r.inTop).slice(0, 5) : [];
   useGSAP(
     () => {
       if (prefersReducedMotion()) return;
@@ -371,6 +372,26 @@ export function CredentialsSection() {
             <button type="button" className="btn is-ghost" onClick={() => openBadge(account)}>
               Open my credentials · {short(account)}
             </button>
+          ) : null}
+          {seated.length ? (
+            <div className="seated">
+              <p className="seated__k num">Passes checked today · the permanent seats</p>
+              <ol>
+                {seated.map((r) => {
+                  const n = nameFor(r.addr, r.nickname, r.x);
+                  return (
+                    <li key={r.addr}>
+                      <button type="button" onClick={() => openBadge(r.addr)}>
+                        <FlagMark flag={flagOf(r.addr, r.pp)} size={42} />
+                        <b className={n.claimed ? "" : "num"}>{n.name}</b>
+                        <span className="num">No. {r.rank}</span>
+                        <span className="num seated__ok">cleared</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
           ) : null}
         </div>
         <div className="pass__hang">

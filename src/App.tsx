@@ -132,16 +132,16 @@ export function App() {
         <Briefing status={status} well={well} />
         <Board status={status} pond={pond} />
         <Reserve status={status} />
-        <Minutes rounds={rounds} live={live} />
+        <Minutes rounds={rounds} live={live} status={status} house={pond?.house} />
         <Embargo status={status} />
-        <CredentialsSection />
+        <CredentialsSection pond={pond} live={live} />
       </main>
       <Closing status={status} well={live ? well : null} ceoAddr={live && pond?.house ? pond.house.addr : undefined} />
       <BadgeDrawer />
       <ShareCard />
       <PumpToast well={live ? well : null} />
       <MarkBanner well={live ? well : null} />
-      <MeetingSiren />
+      <MeetingSiren board={live ? (pond?.rows ?? []).filter((r) => r.inTop) : []} />
     </div>
   );
 }

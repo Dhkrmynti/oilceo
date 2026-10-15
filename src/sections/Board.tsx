@@ -14,45 +14,71 @@ import { Countdown, Held } from "../lib/clock";
 import { TICKER } from "../lib/brand";
 import { flagOf } from "../lib/barrels";
 import { prefersReducedMotion } from "../lib/motion";
-import { Face, Head, XCheck, openBadge } from "../ui/Bits";
+import { Face, Head, XCheck, openBadge, useMedia } from "../ui/Bits";
 import { FlagMark } from "../ui/Flag";
 import { BarrelCEO } from "../world/Barrel";
 
 /** Where seat No. k sits, in degrees round the table from the head: permanent seats nearest the CEO. */
 const SEAT_DEG = [40, 320, 70, 290, 100, 260, 130, 230, 160, 200];
-const CX = 450;
-const CY = 300;
-const RX = 290;
-const RY = 150;
 
-function Table({ top, shares, nextMeeting, threshold }: { top: PondRow[]; shares: number[]; nextMeeting: number; threshold: string }) {
+interface Seat {
+  /** the chair */
+  sx: number;
+  sy: number;
+  /** the flag on the table, top left corner */
+  fx: number;
+  fy: number;
+  /** the name tag */
+  lx: number;
+  ly: number;
+  anchor: "start" | "middle" | "end";
+}
+
+/** The wide table, seen from above: seats round an oval, names outside the chairs. */
+const WIDE = { w: 900, h: 560, cx: 450, cy: 300, rx: 290, ry: 150, ceo: { x: 398, y: 38, s: 0.52 } };
+const wideSeats: Seat[] = SEAT_DEG.map((deg) => {
+  const a = (deg * Math.PI) / 180;
+  const { cx, cy, rx, ry } = WIDE;
+  const sx = cx + (rx + 46) * Math.sin(a);
+  const sy = cy - (ry + 44) * Math.cos(a);
+  return { sx, sy, fx: cx + (rx - 46) * Math.sin(a) - 18, fy: cy - (ry - 34) * Math.cos(a) - 12, lx: sx, ly: Math.cos(a) < 0 ? sy + 54 : sy - 60, anchor: "middle" };
+});
+
+/** The tall table for a phone: five chairs down each side, names written on the table beside them. */
+const TALL = { w: 400, h: 620, cx: 200, cy: 350, rx: 118, ry: 236, ceo: { x: 152, y: 0, s: 0.48 } };
+const tallSeats: Seat[] = Array.from({ length: 10 }, (_, i) => {
+  const right = i % 2 === 0;
+  const row = Math.floor(i / 2);
+  const sy = 196 + row * 86;
+  const sx = right ? 362 : 38;
+  return { sx, sy, fx: right ? 290 : 74, fy: sy - 26, lx: right ? 324 : 76, ly: sy + 22, anchor: right ? "end" : "start" };
+});
+
+function Table({ top, shares, nextMeeting, threshold, tall }: { top: PondRow[]; shares: number[]; nextMeeting: number; threshold: string; tall: boolean }) {
+  const T = tall ? TALL : WIDE;
+  const seats = tall ? tallSeats : wideSeats;
+  const r0 = tall ? 24 : 30;
   return (
-    <svg className="table" viewBox="0 0 900 560" role="group" aria-label="The Board at the round table">
-      <ellipse cx={CX} cy={CY + 14} rx={RX + 6} ry={RY + 6} fill="rgba(0,0,0,.35)" />
-      <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill="#4a2e1b" />
-      <ellipse cx={CX} cy={CY} rx={RX - 18} ry={RY - 14} fill="#5a3a22" />
-      <ellipse cx={CX} cy={CY} rx={RX - 70} ry={RY - 52} fill="none" stroke="#d9a93f" strokeWidth="1.5" opacity="0.6" />
+    <svg className={`table ${tall ? "is-tall" : ""}`} viewBox={`0 0 ${T.w} ${T.h}`} role="group" aria-label="The Board at the round table">
+      <ellipse cx={T.cx} cy={T.cy + 14} rx={T.rx + 6} ry={T.ry + 6} fill="rgba(0,0,0,.35)" />
+      <ellipse cx={T.cx} cy={T.cy} rx={T.rx} ry={T.ry} fill="#4a2e1b" />
+      <ellipse cx={T.cx} cy={T.cy} rx={T.rx - 16} ry={T.ry - 14} fill="#5a3a22" />
+      <ellipse cx={T.cx} cy={T.cy} rx={T.rx * 0.76} ry={T.ry * 0.65} fill="none" stroke="#d9a93f" strokeWidth="1.5" opacity="0.6" />
       {/* the head of the table */}
-      <g transform={`translate(${CX - 52} ${CY - RY - 112}) scale(0.52)`}>
+      <g transform={`translate(${T.ceo.x} ${T.ceo.y}) scale(${T.ceo.s})`}>
         <BarrelCEO />
       </g>
-      <text x={CX} y={CY - 18} textAnchor="middle" className="table__k">
-        EMERGENCY MEETING #{nextMeeting}
+      <text x={T.cx} y={T.cy - 18} textAnchor="middle" className="table__k">
+        {tall ? `MEETING #${nextMeeting}` : `EMERGENCY MEETING #${nextMeeting}`}
       </text>
-      <text x={CX} y={CY + 10} textAnchor="middle" className="table__v">
-        convenes at {threshold} ETH
+      <text x={T.cx} y={T.cy + 8} textAnchor="middle" className="table__v">
+        at {threshold} ETH
       </text>
-      <path d={`M${CX - 30} ${CY + 40} l22 -10 l6 12 l-22 10Z M${CX - 12} ${CY + 36} l40 18`} stroke="#d9a93f" strokeWidth="5" fill="#d9a93f" strokeLinecap="round" />
-      {SEAT_DEG.map((deg, i) => {
+      <path d={`M${T.cx - 30} ${T.cy + 40} l22 -10 l6 12 l-22 10Z M${T.cx - 12} ${T.cy + 36} l40 18`} stroke="#d9a93f" strokeWidth="5" fill="#d9a93f" strokeLinecap="round" />
+      {seats.map((p, i) => {
         const r = top[i];
-        const a = (deg * Math.PI) / 180;
-        const sx = CX + (RX + 46) * Math.sin(a);
-        const sy = CY - (RY + 44) * Math.cos(a);
-        const fx = CX + (RX - 46) * Math.sin(a);
-        const fy = CY - (RY - 34) * Math.cos(a);
-        const below = Math.cos(a) < 0;
-        const ly = below ? sy + 54 : sy - 60;
         const name = r ? nameFor(r.addr, r.nickname, r.x).name : "Empty seat";
+        const max = tall ? 11 : 16;
         return (
           <g
             key={i}
@@ -63,20 +89,20 @@ function Table({ top, shares, nextMeeting, threshold }: { top: PondRow[]; shares
             onClick={r ? () => openBadge(r.addr) : undefined}
             onKeyDown={r ? (e) => (e.key === "Enter" || e.key === " ") && openBadge(r.addr) : undefined}
           >
-            <circle cx={sx} cy={sy} r="30" className="seat__chair" />
-            <text x={sx} y={sy + 7} textAnchor="middle" className="seat__n">
+            <circle cx={p.sx} cy={p.sy} r={r0} className="seat__chair" />
+            <text x={p.sx} y={p.sy + 7} textAnchor="middle" className="seat__n">
               {i + 1}
             </text>
             {r ? (
-              <g transform={`translate(${fx - 18} ${fy - 12})`}>
+              <g transform={`translate(${p.fx} ${p.fy})`}>
                 <FlagMark flag={flagOf(r.addr, r.pp)} size={36} />
               </g>
             ) : null}
-            <text x={sx} y={ly} textAnchor="middle" className="seat__name">
-              {name.length > 16 ? `${name.slice(0, 15)}…` : name}
+            <text x={p.lx} y={p.ly} textAnchor={p.anchor} className="seat__name">
+              {name.length > max ? `${name.slice(0, max - 1)}…` : name}
             </text>
-            {r ? (
-              <text x={sx} y={ly + 20} textAnchor="middle" className="seat__eth">
+            {r && !tall ? (
+              <text x={p.lx} y={p.ly + 20} textAnchor="middle" className="seat__eth">
                 +{(shares[i] ?? 0).toFixed(4)} ETH
               </text>
             ) : null}
@@ -161,6 +187,7 @@ export function Board({ status, pond }: { status: Status | null; pond: Pond | nu
   const shares = splitInheritance(reward, top.map((r) => parseFloat(r.balance)), tiers);
   const waiting = live ? (pond?.waiting ?? []) : [];
   const meetings = status ? Math.ceil(status.rounds / 2) : 0;
+  const narrow = useMedia("(max-width: 700px)");
 
   useGSAP(
     () => {
@@ -186,7 +213,7 @@ export function Board({ status, pond }: { status: Status | null; pond: Pond | nu
           }
           lead={`Ranked by ${TICKER} held, never sold. The next emergency meeting pays ${reward} ETH: ${tiers.map((t) => `${t.pct}% to No. ${t.from}-${t.to}`).join(" and ")}, split by balance inside each bench.`}
         />
-        {top.length ? <Table top={top} shares={shares} nextMeeting={meetings + 1} threshold={meetStep?.thresholdETH ?? "0.02"} /> : null}
+        {top.length ? <Table top={top} shares={shares} nextMeeting={meetings + 1} threshold={meetStep?.thresholdETH ?? "0.02"} tall={narrow} /> : null}
         <div className="tabs" role="tablist">
           <button type="button" role="tab" aria-selected={tab === "seats"} className={tab === "seats" ? "is-on" : ""} onClick={() => setTab("seats")}>
             Seating by holdings

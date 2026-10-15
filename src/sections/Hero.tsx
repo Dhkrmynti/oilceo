@@ -86,7 +86,7 @@ function Office({ board, pumped, alarm, gone }: { board: PondRow[]; pumped: numb
         <rect x="80" y="446" width="200" height="96" rx="4" />
         <rect x="520" y="446" width="200" height="96" rx="4" />
       </g>
-      <g transform="translate(400 494)">
+      <g transform="translate(400 502) scale(0.86)">
         <circle r="44" fill="none" stroke="#d9a93f" strokeWidth="3" />
         <circle r="36" fill="none" stroke="#d9a93f" strokeWidth="1" strokeDasharray="2 4" />
         <path d="M0 -22 c9 12 16 20 16 29 a16 16 0 0 1 -32 0 c0 -9 7 -17 16 -29Z" fill="#d9a93f" />
@@ -97,7 +97,7 @@ function Office({ board, pumped, alarm, gone }: { board: PondRow[]; pumped: numb
         <path d="M-4 8 Q32 -10 68 8 L62 16 Q32 4 2 16Z" fill="#d42a1f" />
         <circle cx="32" cy="22" r="6" fill="#7d150f" />
       </g>
-      <g transform="translate(330 386)">
+      <g transform="translate(330 434)">
         <rect width="140" height="20" rx="2" fill="#d9a93f" />
         <text x="70" y="14.5" textAnchor="middle" className="office__plate">
           THE BARREL · CEO
@@ -143,7 +143,7 @@ export function Hero({ status, pond, well, feed }: { status: Status | null; pond
     <section className={`place hero is-${stage}`} id="top" aria-label="The office" style={{ "--fill": fill.toFixed(3) } as React.CSSProperties}>
       <div className="hero__copy">
         <p className="hero__k num">
-          <span className="hero__live">● Live</span> from the Barrel House · {TICKER}
+          {live ? <span className="hero__live">● Live</span> : "Opening soon"} {live ? "from" : "at"} the Barrel House · {TICKER}
         </p>
         {stage === "gone" ? (
           <h1 className="hero__h">
@@ -184,12 +184,15 @@ export function Hero({ status, pond, well, feed }: { status: Status | null; pond
       <div className="hero__strip">
         <dl className="meter" aria-label="The reserve and the well">
           <div className={`meter__cell is-wide is-reserve ${fill >= 0.8 && meeting ? "is-alarm" : ""}`}>
-            <dt>Oil Reserve · next: {STEP[step?.kind ?? "feeding"].name}</dt>
+            <dt>Oil Reserve</dt>
             <dd className="num">
               {escrow.toFixed(4)} <small>/ {target} ETH</small>
             </dd>
             <span className="meter__bar" aria-hidden="true">
               <i style={{ width: `${Math.max(2, fill * 100)}%` }} />
+            </span>
+            <span className="meter__next num">
+              {Math.round(fill * 100)}% · next: {STEP[step?.kind ?? "feeding"].name}
             </span>
           </div>
           <div className="meter__cell">
@@ -201,7 +204,7 @@ export function Hero({ status, pond, well, feed }: { status: Status | null; pond
           <div className={`meter__cell ${stage === "last100" ? "is-alarm" : ""}`}>
             <dt>Left in the well</dt>
             <dd className="num">
-              {left.toLocaleString("en-US")} <small>{pct.toFixed(pct < 10 ? 1 : 0)}% out</small>
+              {left.toLocaleString("en-US")} <small className="is-under">{pct.toFixed(pct < 10 ? 1 : 0)}% pumped</small>
             </dd>
           </div>
           <div className="meter__cell">

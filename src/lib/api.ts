@@ -168,6 +168,10 @@ export const ponsUrl = (ca: string) => `https://ponsfamily.com/launchpad/${ca}`;
 export const dexUrl = (ca: string) => `https://dexscreener.com/robinhood/${ca}`;
 // The house account on X; empty hides every link to it until there is one.
 export const X_URL = "";
+/** The public source of this site and its engine: anyone can read what the engine does with the fees. */
+export const REPO_URL = "https://github.com/Dhkrmynti/oilceo";
+/** Pons's creator-fee escrow: the Oil Reserve. The engine claims from it (bot/pads-engine.ts). */
+export const PONS_FEE_ESCROW = "0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e";
 export const txUrl = (tx: string) => `${EXPLORER}/tx/${tx}`;
 export const addrUrl = (a: string) => `${EXPLORER}/address/${a}`;
 

@@ -69,11 +69,12 @@ export function Briefing({ status, well }: { status: Status | null; well: Well |
   const meet = status?.cycle.steps.find((s) => s.kind === "feeding")?.thresholdETH ?? "0.02";
   const out = status?.tokenAddress ? status.counts.hopped : 0;
   const folders = [
-    { n: "01", e: 1, t: "Buy, and a barrel comes up.", b: `One buy of at least ${barrelMin} ${TICKER} pumps one numbered barrel out of a well of ${total}. It gets a crude grade and the day's headline. The well never refills.` },
-    { n: "02", e: 2, t: "Hold, and take a seat.", b: `Hold ${min} ${TICKER} or more and never sell. The ten biggest wallets sit on the Board: No. 1 to 5 in permanent seats, No. 6 to 10 in rotating seats. No. 1 holds the gavel.` },
-    { n: "03", e: 0, t: "Full reserve, emergency meeting.", b: `Every trade pays a fee into the Oil Reserve. When it reaches ${meet} ETH the Board meets on-chain and the ETH goes straight to the ten. The next fill goes to the treasury, then the Board again.` },
-    { n: "04", e: 3, t: "Sell once, and you're under embargo.", b: `A wallet that sells is sanctioned for good: no seat, no meeting money, ever. Moving ${TICKER} between your own wallets is not a sale.${out ? ` ${out} wallets are under embargo so far.` : ""}` },
+    { n: "01", e: 1, t: "Buy, and a barrel comes up.", b: `Every buy of ${barrelMin}+ ${TICKER} pumps one numbered barrel, with its own headline. ${total} in the well. No refills.` },
+    { n: "02", e: 2, t: "Hold, and take a seat.", b: `The ten biggest wallets that never sold sit on the Board. Minimum ${min} ${TICKER}.` },
+    { n: "03", e: 0, t: "Full reserve, emergency meeting.", b: `Trading fees fill the Oil Reserve. At ${meet} ETH the Board meets on-chain and the ETH goes to the ten.` },
+    { n: "04", e: 3, t: "Sell once, embargoed for good.", b: `No seat, no meeting money, ever.${out ? ` ${out} wallets so far.` : ""} Moving between your own wallets is fine.` },
   ];
+
 
   useGSAP(
     () => {

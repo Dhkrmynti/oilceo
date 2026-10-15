@@ -5,7 +5,8 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { DownloadSimple, Siren, ShareNetwork, X as Close, XLogo, Drop } from "@phosphor-icons/react";
-import { DEMO, demoBarrel, type Well } from "../lib/api";
+import { DEMO, demoBarrel, type PondRow, type Well } from "../lib/api";
+import { FlagOf } from "./Flag";
 import { nameFor } from "../lib/alias";
 import { drawCard, postText, type CardBarrel } from "../lib/sharecard";
 import { gradeOf } from "../lib/barrels";
@@ -229,9 +230,13 @@ export function PumpToast({ well }: { well: Well | null }) {
   );
 }
 
-/** An emergency meeting just paid the Board: the siren goes for a few seconds. */
-export function MeetingSiren() {
+/**
+ * An emergency meeting just paid the Board: the whole screen goes to red for a few seconds, the
+ * stamp comes down, and the ten flags that were paid line up under it. This is the moment people record.
+ */
+export function MeetingSiren({ board }: { board: PondRow[] }) {
   const [drop, setDrop] = useState<MeetingDrop | null>(null);
+  const closeBtn = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const on = (e: Event) => setDrop((e as CustomEvent<MeetingDrop>).detail);
     window.addEventListener("oil:meeting", on);
@@ -239,19 +244,45 @@ export function MeetingSiren() {
   }, []);
   useEffect(() => {
     if (!drop) return;
-    const t = window.setTimeout(() => setDrop(null), 9000);
-    return () => clearTimeout(t);
+    closeBtn.current?.focus();
+    const t = window.setTimeout(() => setDrop(null), 8000);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setDrop(null);
+    window.addEventListener("keydown", esc);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("keydown", esc);
+    };
   }, [drop]);
   if (!drop) return null;
+  const seats = board.slice(0, 10);
   return (
-    <div className="siren" role="status">
-      <Siren weight="fill" aria-hidden="true" className="siren__icon" />
-      <p>
-        <b className="num">Emergency meeting #{drop.n}</b> adjourned. {drop.eth.toFixed(4)} ETH went to the Board.
-      </p>
-      <button type="button" className="toast__x" onClick={() => setDrop(null)} aria-label="Dismiss">
-        <Close weight="bold" />
-      </button>
+    <div className="meeting" role="alertdialog" aria-label={`Emergency meeting ${drop.n} adjourned`}>
+      <button type="button" className="meeting__scrim" onClick={() => setDrop(null)} aria-label="Close" />
+      <div className="meeting__card">
+        <p className="meeting__k num">
+          <Siren weight="fill" aria-hidden="true" /> Breaking · the Barrel House
+        </p>
+        <p className="meeting__stamp">
+          Emergency meeting <span className="num">#{drop.n}</span>
+        </p>
+        <p className="meeting__eth num">
+          {drop.eth.toFixed(4)} <small>ETH</small>
+        </p>
+        <p className="meeting__line">paid on-chain to the Board. Meeting adjourned.</p>
+        {seats.length ? (
+          <ol className="meeting__flags" aria-label="Paid">
+            {seats.map((r, i) => (
+              <li key={r.addr} style={{ animationDelay: `${0.5 + i * 0.07}s` }}>
+                <FlagOf addr={r.addr} pp={r.pp} size={44} />
+                <span className="num">{i + 1}</span>
+              </li>
+            ))}
+          </ol>
+        ) : null}
+        <button type="button" ref={closeBtn} className="btn is-ghost meeting__x" onClick={() => setDrop(null)}>
+          Back to the office
+        </button>
+      </div>
     </div>
   );
 }

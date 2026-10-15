@@ -54,7 +54,7 @@ const nonces = new Map<string, { nonce: string; exp: number }>();
 
 /** Words a byline may not contain: impersonation of staff, and the obvious abuse. */
 const BANNED = [
-  "admin", "official", "oilceo", "sawit", "menkrep", "mojang", "minecraft", "notch", "bank", "support", "moderator", "team", "staff", "dev", "owner", "pons", "airdrop", "claim", "giveaway",
+  "admin", "official", "oilceo", "oil ceo", "barrel ceo", "ceo", "bank", "support", "moderator", "team", "staff", "dev", "owner", "pons", "airdrop", "claim", "giveaway",
   "fuck", "shit", "cunt", "nigg", "fag", "rape", "nazi", "hitler", "porn", "whore", "bitch", "retard",
 ];
 

@@ -8,7 +8,8 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ArrowUpRight } from "@phosphor-icons/react";
-import { DEFAULT_STEPS, STEP, dateWib, demoGraveyard, eth, stepShare, txUrl, usePoll, type Graveyard, type RoundRow, type Status } from "../lib/api";
+import { DEFAULT_STEPS, DEMO, PONS_FEE_ESCROW, REPO_URL, STEP, addrUrl, amount, dateWib, demoGraveyard, eth, short, stepShare, txUrl, usePoll, type Graveyard, type HouseRow, type RoundRow, type Status } from "../lib/api";
+import { CHAIN, TICKER } from "../lib/brand";
 import { nameFor } from "../lib/alias";
 import { span } from "../lib/clock";
 import { prefersReducedMotion } from "../lib/motion";
@@ -89,7 +90,7 @@ export function Reserve({ status }: { status: Status | null }) {
   useGSAP(
     () => {
       if (prefersReducedMotion()) return;
-      gsap.fromTo(".tank__oil", { yPercent: 70 }, { yPercent: 0, ease: "none", scrollTrigger: { trigger: ".tank", start: "top 80%", end: "center 45%", scrub: 0.6 } });
+      gsap.fromTo(".tank__oil", { yPercent: 70 }, { yPercent: 0, duration: 1.6, ease: "power2.out", scrollTrigger: { trigger: ".tank", start: "top 80%", once: true } });
       gsap.from(".valve", { x: 50, opacity: 0, duration: 0.6, ease: "back.out(1.6)", stagger: 0.15, scrollTrigger: { trigger: ".works", start: "top 70%" } });
       gsap.from(".plate", { y: 30, opacity: 0, duration: 0.5, ease: "power2.out", stagger: 0.08, scrollTrigger: { trigger: ".plates", start: "top 88%" } });
     },
@@ -100,18 +101,56 @@ export function Reserve({ status }: { status: Status | null }) {
     <section className="place reserve" id="reserve" ref={root} aria-labelledby="reserve-h">
       <RefineryEdge />
       <div className="wrap">
-        <Head
-          kicker="04 · the oil reserve"
-          id="reserve-h"
-          title={
-            <>
-              Every trade fills it. <em>Full means a meeting.</em>
-            </>
-          }
-          lead="Every trade pays a fee into the Oil Reserve. When it reaches the size of the next step, the valve opens and the engine runs that step, in this order, for as long as people trade."
-        />
+        <div className="reserve__top">
+          <Head
+            kicker="04 · the oil reserve"
+            id="reserve-h"
+            title={
+              <>
+                Every trade fills it. <em>Full means a meeting.</em>
+              </>
+            }
+            lead="Every trade pays a fee into the Oil Reserve. When it reaches the size of the next step, the valve opens and the engine runs that step, in this order, for as long as people trade."
+          />
+          <div className="plates">
+            <div className="plate is-split">
+              <p className="num">Over one full loop</p>
+              <span className="split__bar" aria-hidden="true">
+                <i className="is-board" style={{ width: `${toBoard}%` }} />
+                <i className="is-tr" style={{ width: `${100 - toBoard}%` }} />
+              </span>
+              <p className="split__legend num">
+                <span>{toBoard}% to the Board</span>
+                <span>{100 - toBoard}% to the treasury</span>
+              </p>
+            </div>
+            <div className="plate">
+              <p className="num">Fees claimed</p>
+              <b className="num">{eth(live ? (t?.feesClaimedETH ?? "0") : "0")}</b>
+            </div>
+            <div className="plate">
+              <p className="num">Paid to the Board</p>
+              <b className="num">{eth(live ? (t?.fedETH ?? "0") : "0")}</b>
+            </div>
+            <div className="plate">
+              <p className="num">To treasury</p>
+              <b className="num">{eth(live ? (t?.keeperETH ?? "0") : "0")}</b>
+            </div>
+            <div className="plate">
+              <p className="num">Sessions held</p>
+              <b className="num">{live ? (status?.rounds ?? 0) : 0}</b>
+            </div>
+          </div>
+        </div>
         <div className="works">
-          <div className="works__tank" role="meter" aria-valuemin={0} aria-valuemax={target} aria-valuenow={escrow} aria-label={`${STEP[step.kind].name}: ${escrow.toFixed(4)} of ${step.thresholdETH} ETH`}>
+          <div
+            className="works__tank"
+            role="meter"
+            aria-valuemin={0}
+            aria-valuemax={target}
+            aria-valuenow={escrow}
+            aria-label={`${STEP[step.kind].name}: ${escrow.toFixed(4)} of ${step.thresholdETH} ETH`}
+          >
             <Tank fill={fill} alarm={alarm} />
             <p className="works__v num">
               {escrow.toFixed(4)} <small>/ {step.thresholdETH} ETH</small>
@@ -123,6 +162,18 @@ export function Reserve({ status }: { status: Status | null }) {
             <path className="pipes__pipe" d="M0 230 H200" />
             <path className={`pipes__oil ${step.kind === "feeding" && live ? "is-flow" : ""}`} d="M0 230 H90 V70 H200" />
             <path className={`pipes__oil ${step.kind === "keeper" && live ? "is-flow" : ""}`} d="M0 230 H200" />
+            <g className="pipes__flange">
+              {[
+                [40, 230, 0],
+                [140, 230, 0],
+                [90, 150, 1],
+                [150, 70, 0],
+              ].map(([x, y, v]) => (
+                <rect key={`${x}-${y}`} x={v ? x - 13 : x - 3} y={v ? y - 3 : y - 13} width={v ? 26 : 6} height={v ? 6 : 26} rx="1" />
+              ))}
+              <circle cx="90" cy="230" r="13" />
+              <circle cx="90" cy="70" r="13" />
+            </g>
           </svg>
           <ol className="valves">
             <li className={`valve is-meeting ${live && step.kind === "feeding" ? "is-now" : ""}`}>
@@ -141,56 +192,93 @@ export function Reserve({ status }: { status: Status | null }) {
             </li>
           </ol>
         </div>
-        <div className="plates">
-          <div className="plate is-split">
-            <p className="num">Over one full loop</p>
-            <span className="split__bar" aria-hidden="true">
-              <i className="is-board" style={{ width: `${toBoard}%` }} />
-              <i className="is-tr" style={{ width: `${100 - toBoard}%` }} />
-            </span>
-            <p className="split__legend num">
-              <span>{toBoard}% to the Board</span>
-              <span>{100 - toBoard}% to the treasury</span>
-            </p>
-          </div>
-          <div className="plate">
-            <p className="num">Fees claimed</p>
-            <b className="num">{eth(live ? (t?.feesClaimedETH ?? "0") : "0")}</b>
-          </div>
-          <div className="plate">
-            <p className="num">Paid to the Board</p>
-            <b className="num">{eth(live ? (t?.fedETH ?? "0") : "0")}</b>
-          </div>
-          <div className="plate">
-            <p className="num">To treasury</p>
-            <b className="num">{eth(live ? (t?.keeperETH ?? "0") : "0")}</b>
-          </div>
-          <div className="plate">
-            <p className="num">Sessions held</p>
-            <b className="num">{live ? (status?.rounds ?? 0) : 0}</b>
-          </div>
-        </div>
         <p className="reserve__fine">The rules of this engine: no buyback, no token burn. Every ETH claimed goes to the Board or to the treasury, and every transfer is in the minutes.</p>
       </div>
     </section>
   );
 }
 
-export function Minutes({ rounds, live }: { rounds: RoundRow[] | null; live: boolean }) {
+/**
+ * Don't trust the barrel: every address that touches the money, one click from the explorer, plus
+ * the engine's source. The demo edition prints no links (a made-up address is a trap).
+ */
+function Receipts({ status, house }: { status: Status | null; house?: HouseRow | null }) {
+  const live = !DEMO && !!status?.tokenAddress;
+  const rows: [string, string, string][] = [
+    ["The Oil Reserve", "Pons fee escrow. Every trade's fee lands here first.", PONS_FEE_ESCROW],
+    ["The engine wallet", "Claims the reserve and pays the Board. Also the dev wallet: never seated, never paid.", status?.walletAddress ?? ""],
+    ["The treasury", "Where the strategic-reserve step goes.", status?.treasuryAddress ?? ""],
+    ["The token", `${TICKER} on ${CHAIN}.`, status?.tokenAddress ?? ""],
+  ];
+  return (
+    <div className="receipts">
+      <p className="receipts__k num">Don't trust the barrel. Check it.</p>
+      <ul>
+        {rows.map(([name, what, addr]) => (
+          <li key={name}>
+            <b>{name}</b>
+            <span>{what}</span>
+            {live && addr ? (
+              <a className="num" href={addrUrl(addr)} target="_blank" rel="noreferrer">
+                {short(addr)} <ArrowUpRight weight="bold" aria-hidden="true" />
+              </a>
+            ) : (
+              <span className="num receipts__wait">at launch</span>
+            )}
+          </li>
+        ))}
+        <li>
+          <b>The engine's code</b>
+          <span>Every rule on this page, in plain TypeScript. Public, read it.</span>
+          <a className="num" href={REPO_URL} target="_blank" rel="noreferrer">
+            GitHub <ArrowUpRight weight="bold" aria-hidden="true" />
+          </a>
+        </li>
+        {live && house ? (
+          <li>
+            <b>What the dev holds</b>
+            <span>The engine wallet's own {TICKER}, live.</span>
+            <span className="num">{amount(house.balance)}</span>
+          </li>
+        ) : null}
+      </ul>
+    </div>
+  );
+}
+
+export function Minutes({ rounds, live, status, house }: { rounds: RoundRow[] | null; live: boolean; status: Status | null; house?: HouseRow | null }) {
   const root = useRef<HTMLElement>(null);
   const rows = live ? (rounds ?? []).filter((r) => r.stage === "done").slice(0, 14) : [];
   useGSAP(
     () => {
       if (prefersReducedMotion()) return;
-      gsap.fromTo(".minutes__doc", { clipPath: "inset(0 0 100% 0)", y: -30 }, { clipPath: "inset(0 0 0% 0)", y: 0, ease: "none", scrollTrigger: { trigger: ".minutes__desk", start: "top 75%", end: "center 50%", scrub: 0.6 } });
-      gsap.fromTo(".minutes__stamp", { scale: 3, opacity: 0, rotate: 30 }, { scale: 1, opacity: 1, rotate: -12, duration: 0.35, ease: "power4.in", scrollTrigger: { trigger: ".minutes__doc", start: "bottom 85%", toggleActions: "play none none reverse" } });
+      gsap.fromTo(
+        ".minutes__doc",
+        { clipPath: "inset(0 0 100% 0)", y: -30 },
+        { clipPath: "inset(0 0 0% 0)", y: 0, duration: 1.4, ease: "power2.inOut", scrollTrigger: { trigger: ".minutes__desk", start: "top 75%", once: true } },
+      );
+      gsap.from(".receipts li", { y: 20, opacity: 0, duration: 0.5, ease: "power2.out", stagger: 0.06, scrollTrigger: { trigger: ".receipts", start: "top 88%", once: true } });
+      gsap.fromTo(
+        ".minutes__stamp",
+        { scale: 3, opacity: 0, rotate: 30 },
+        { scale: 1, opacity: 1, rotate: -12, duration: 0.35, ease: "power4.in", scrollTrigger: { trigger: ".minutes__doc", start: "bottom 85%", toggleActions: "play none none reverse" } },
+      );
     },
     { scope: root, dependencies: [rows.length > 0] },
   );
   return (
     <section className="place minutes" id="minutes" ref={root} aria-labelledby="minutes-h">
       <div className="wrap">
-        <Head kicker="05 · the minutes" id="minutes-h" title={<>Every session, <em>on the record.</em></>} lead="The secretary types one resolution per round, and each one links to its transaction. Nobody has to take the barrel's word for it." />
+        <Head
+          kicker="05 · the minutes"
+          id="minutes-h"
+          title={
+            <>
+              Every session, <em>on the record.</em>
+            </>
+          }
+          lead="The secretary types one resolution per round, and each one links to its transaction. Nobody has to take the barrel's word for it."
+        />
         <div className="minutes__desk">
           {rows.length ? (
             <div className="minutes__doc" role="table" aria-label="Resolutions">
@@ -239,6 +327,7 @@ export function Minutes({ rounds, live }: { rounds: RoundRow[] | null; live: boo
             <p className="empty">{live ? "No session yet. The first convenes when the reserve reaches its first step." : "The secretary starts typing at launch."}</p>
           )}
         </div>
+        <Receipts status={status} house={house} />
       </div>
     </section>
   );
@@ -254,7 +343,11 @@ export function Embargo({ status }: { status: Status | null }) {
     () => {
       if (prefersReducedMotion()) return;
       gsap.from(".sanction", { y: 50, opacity: 0, rotate: (i) => (i % 2 ? 3 : -3), duration: 0.6, ease: "power2.out", stagger: 0.06, scrollTrigger: { trigger: ".sanctions", start: "top 85%" } });
-      gsap.fromTo(".sanction__stamp", { scale: 2.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "power4.in", stagger: 0.06, delay: 0.4, scrollTrigger: { trigger: ".sanctions", start: "top 80%" } });
+      gsap.fromTo(
+        ".sanction__stamp",
+        { scale: 2.4, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: "power4.in", stagger: 0.06, delay: 0.4, scrollTrigger: { trigger: ".sanctions", start: "top 80%" } },
+      );
     },
     { scope: root, dependencies: [rows.length > 0] },
   );
@@ -279,7 +372,9 @@ export function Embargo({ status }: { status: Status | null }) {
               return (
                 <li key={g.addr} className="sanction">
                   <button type="button" onClick={() => openBadge(g.addr)}>
-                    <Face addr={g.addr} pp={g.pp} x={g.x} size={40} className="sanction__face" />
+                    <span className="sanction__photo" aria-hidden="true">
+                      <Face addr={g.addr} pp={g.pp} x={g.x} size={72} className="sanction__face" />
+                    </span>
                     <b className={n.claimed ? "" : "num"}>{n.name}</b>
                     <span className="num">held {span(g.hoppedAt - g.firstIn)}</span>
                     <span className="num">{parseFloat(g.received) > 0 ? `paid ${parseFloat(g.received).toFixed(4)} ETH before` : "never paid"}</span>
