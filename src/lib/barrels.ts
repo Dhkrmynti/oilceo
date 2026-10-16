@@ -31,7 +31,7 @@ const WHO = [
 const DID = [
   "walked out", "agreed to disagree", "sent a strongly worded letter", "cancelled the photo op",
   "blamed each other", "talked past midnight", "announced new sanctions", "denied everything",
-  "called for calm", "shook hands for 14 seconds", "posted on X at 3 a.m.", "recalled an ambassador",
+  "called for calm", "shook hands for 14 seconds", "posted on X at 3 in the morning", "recalled an ambassador",
   "demanded an apology", "left before lunch", "drafted a joint statement nobody signed", "threatened tariffs",
 ];
 const THEN = [

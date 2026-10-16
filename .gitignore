@@ -22,3 +22,6 @@ remotion-x/out-payslip.json
 bot-state.json.bak
 *.log
 konten-x/out
+konten-x/studio/node_modules
+konten-x/studio/out
+konten-x/studio/build
