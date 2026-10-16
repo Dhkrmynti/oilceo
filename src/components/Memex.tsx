@@ -6,6 +6,7 @@ export function Memex() {
   const { data: status, error } = usePoll<Status>("/api/status", 8000);
   const [token, setToken] = useState("");
   const [treasury, setTreasury] = useState("");
+  const [creator, setCreator] = useState("");
   const [key, setKey] = useState("");
   const [secret, setSecret] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -19,7 +20,7 @@ export function Memex() {
       const r = await fetch("/api/admin/save", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(secret ? { "x-admin-secret": secret } : {}) },
-        body: JSON.stringify({ tokenAddress: token, treasuryAddress: treasury, privateKey: key }),
+        body: JSON.stringify({ tokenAddress: token, treasuryAddress: treasury, creatorAddress: creator, privateKey: key }),
       });
       const j = await r.json();
       setMsg({ ok: !!j.success, text: j.success ? "Saved. The engine picks it up on its next tick." : j.error || "Not saved." });
@@ -55,6 +56,10 @@ export function Memex() {
             <dd className="tabular">{status?.treasuryAddress ? short(status.treasuryAddress) : "not set"}</dd>
           </div>
           <div>
+            <dt>Automation</dt>
+            <dd>{status ? (status.automation === false ? "off (AUTOMATION=0)" : "on") : "-"}</dd>
+          </div>
+          <div>
             <dt>Fee escrow</dt>
             <dd className="tabular">{status ? `${status.escrowETH} ETH` : "-"}</dd>
           </div>
@@ -71,6 +76,8 @@ export function Memex() {
           <input id="m-token" value={token} onChange={(e) => setToken(e.target.value)} placeholder={status?.tokenAddress || "0x…"} spellCheck={false} />
           <label htmlFor="m-key">Operator private key</label>
           <input id="m-key" type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={status?.walletAddress ? "set (locked)" : "0x…"} autoComplete="off" />
+          <label htmlFor="m-creator">Creator address (no key: reads the fee escrow only)</label>
+          <input id="m-creator" value={creator} onChange={(e) => setCreator(e.target.value)} placeholder={status?.walletAddress || "0x…"} spellCheck={false} />
           <label htmlFor="m-treasury">Treasury address (the reserve)</label>
           <input id="m-treasury" value={treasury} onChange={(e) => setTreasury(e.target.value)} placeholder={status?.treasuryAddress || "0x…"} spellCheck={false} />
           <label htmlFor="m-secret">Admin secret (needed for every save)</label>

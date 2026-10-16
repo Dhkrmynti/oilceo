@@ -85,7 +85,8 @@ export function Reserve({ status }: { status: Status | null }) {
   const t = status?.totals;
   const meeting = steps.find((s) => s.kind === "feeding");
   const treasury = steps.find((s) => s.kind === "keeper");
-  const alarm = live && step.kind === "feeding" && fill >= 0.8;
+  const paused = live && status?.automation === false;
+  const alarm = live && !paused && step.kind === "feeding" && fill >= 0.8;
 
   useGSAP(
     () => {
@@ -155,7 +156,7 @@ export function Reserve({ status }: { status: Status | null }) {
             <p className="works__v num">
               {escrow.toFixed(4)} <small>/ {step.thresholdETH} ETH</small>
             </p>
-            <p className="works__k num">{alarm ? "● Delegates are being called in" : `Now filling: ${STEP[step.kind].name}`}</p>
+            <p className="works__k num">{paused ? "Payouts paused · the reserve keeps filling" : alarm ? "● Delegates are being called in" : `Now filling: ${STEP[step.kind].name}`}</p>
           </div>
           <svg className="pipes" viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true">
             <path className="pipes__pipe" d="M0 230 H90 V70 H200" />
@@ -192,7 +193,11 @@ export function Reserve({ status }: { status: Status | null }) {
             </li>
           </ol>
         </div>
-        <p className="reserve__fine">The rules of this engine: no buyback, no token burn. Every ETH claimed goes to the Board or to the treasury, and every transfer is in the minutes.</p>
+        <p className="reserve__fine">
+          {paused
+            ? "Payouts are paused for now: the engine reads the reserve but claims nothing and pays nothing. The fees stay in the Pons escrow until meetings resume, and the minutes will show every one."
+            : "The rules of this engine: no buyback, no token burn. Every ETH claimed goes to the Board or to the treasury, and every transfer is in the minutes."}
+        </p>
       </div>
     </section>
   );

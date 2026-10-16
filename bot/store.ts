@@ -34,6 +34,8 @@ export interface Config {
   tokenAddress: string;
   curveAddress: string;
   treasuryAddress: string;
+  /** The wallet that launched the token on Pons. Lets the engine read the fee escrow without a key. */
+  creatorAddress: string;
   /** Extra addresses that count as "selling" when $OILCEO is sent to them (DEX pool / PoolManager). */
   sellSinks: string[];
   /** Any transfer of $OILCEO into a contract counts as a sell (except excluded addresses). */
@@ -69,6 +71,7 @@ export const config: Config = {
   tokenAddress: env.TOKEN_ADDRESS || "",
   curveAddress: env.CURVE_ADDRESS || "",
   treasuryAddress: env.TREASURY_ADDRESS || "",
+  creatorAddress: env.CREATOR_ADDRESS || "",
   sellSinks: (env.SELL_SINKS || "").split(",").map((s) => s.trim()).filter(Boolean),
   contractsAreSells: env.CONTRACTS_ARE_SELLS !== "0",
   feedingETH: env.FEEDING_ETH || "0.02",
@@ -100,6 +103,13 @@ if (fs.existsSync(CONFIG_FILE)) {
     console.error("bot-config.json unreadable, using env defaults:", e.message);
   }
 }
+
+/**
+ * AUTOMATION=0 in .env: the engine never claims or pays. It still indexes, ranks and reads the fee
+ * escrow, so the site keeps showing the Oil Reserve. Read from .env only (never saved), so flipping it
+ * back is one line and a restart.
+ */
+export const AUTOMATION = process.env.AUTOMATION !== "0";
 
 export function saveConfig() {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf-8");

@@ -132,7 +132,8 @@ export function Hero({ status, pond, well, feed }: { status: Status | null; pond
   const step = status?.cycle;
   const target = parseFloat(step?.thresholdETH ?? "0.02");
   const fill = target > 0 ? Math.max(0, Math.min(1, escrow / target)) : 0;
-  const meeting = (step?.kind ?? "feeding") === "feeding";
+  // with automation off nothing gets called in, so the siren stays dark
+  const meeting = (step?.kind ?? "feeding") === "feeding" && status?.automation !== false;
 
   const board = useMemo(() => (live ? (pond?.rows ?? []).filter((r) => r.inTop).slice(0, 10) : []), [pond, live]);
 

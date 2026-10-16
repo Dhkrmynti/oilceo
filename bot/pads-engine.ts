@@ -17,7 +17,7 @@ import fs from "fs";
 import http from "http";
 import path from "path";
 import { ethers } from "ethers";
-import { config, saveConfig, state, saveStateNow, saveStateSoon, resetStateForToken, logs, log, CYCLE, type Holder, type Payout, type Round, type RoundKind } from "./store";
+import { AUTOMATION, config, saveConfig, state, saveStateNow, saveStateSoon, resetStateForToken, logs, log, CYCLE, type Holder, type Payout, type Round, type RoundKind } from "./store";
 
 /** The rules a buy is checked against; see bot/forest.ts. */
 function buyRules(ex: Set<string>, sinks: Set<string>): BuyRules {
@@ -112,6 +112,7 @@ function excluded(): Set<string> {
   if (isAddr(config.treasuryAddress)) s.add(lc(config.treasuryAddress));
   if (isAddr(config.tokenAddress)) s.add(lc(config.tokenAddress));
   if (wallet) s.add(lc(wallet.address));
+  if (isAddr(config.creatorAddress)) s.add(lc(config.creatorAddress));
   for (const a of config.sellSinks) s.add(lc(a));
   return s;
 }
@@ -395,10 +396,21 @@ async function keep(r: Round) {
   return true;
 }
 
+/** The creator wallet: the operator key's address, else the address set without a key. */
+const creator = () => (wallet ? wallet.address : isAddr(config.creatorAddress) ? ethers.getAddress(config.creatorAddress) : "");
+
+/** What sits in the Pons fee escrow for the creator: the Oil Reserve the site shows. Read only. */
+async function readEscrow() {
+  const who = creator();
+  if (!who || !provider) return;
+  escrowWei = await new ethers.Contract(PONS_FEE_ESCROW, ESCROW_ABI, provider).balanceOf(who);
+}
+
 async function runCycle() {
-  if (!wallet || !provider || !isAddr(config.tokenAddress)) return;
-  const escrow = new ethers.Contract(PONS_FEE_ESCROW, ESCROW_ABI, wallet);
-  escrowWei = await escrow.balanceOf(wallet.address);
+  if (!provider || !isAddr(config.tokenAddress)) return;
+  await readEscrow();
+  if (!AUTOMATION) return note("Automation is off (AUTOMATION=0): the reserve is shown, nothing is claimed or paid.");
+  if (!wallet) return;
 
   let r = state.rounds[0];
   if (r?.stage === "claiming") await claimRound(r);
@@ -684,7 +696,8 @@ const server = http.createServer((req, res) => {
       data: {
         online: true,
         status,
-        walletAddress: wallet?.address || "",
+        walletAddress: creator(),
+        automation: AUTOMATION,
         tokenAddress: config.tokenAddress,
         curveAddress: config.curveAddress,
         treasuryAddress: config.treasuryAddress,
@@ -755,9 +768,9 @@ const server = http.createServer((req, res) => {
           .filter(([, h]) => h.hopped && now - h.hoppedAt < 900)
           .map(([a]) => a),
         // The dev (the creator wallet the engine runs on): shown at the front desk, never ranked or paid.
-        house: wallet
+        house: creator()
           ? (() => {
-              const a = lc(wallet.address);
+              const a = lc(creator());
               const h = state.holders[a];
               return { addr: a, balance: fmt(h?.balance || "0"), nickname: bylineOf(a), pp: mugshotOf(a), x: xOf(a) };
             })()
@@ -887,7 +900,7 @@ const server = http.createServer((req, res) => {
         x: xOf(addr),
         xLogin: xEnabled(),
         // the dev: the creator wallet the engine runs on (excluded from the book, but may set a name and X)
-        house: !!wallet && lc(wallet.address) === addr,
+        house: !!creator() && lc(creator()) === addr,
         treeCount: h?.treeCount || 0,
         trees: (h?.trees || []).map((x) => ({ ...x, amount: fmt(x.amount) })),
         forestTotal: config.forestTrees,
@@ -933,6 +946,14 @@ const server = http.createServer((req, res) => {
             log("info", `[CONFIG] Treasury set: ${config.treasuryAddress}`);
           }
         }
+        if (typeof d.creatorAddress === "string" && d.creatorAddress.trim() && lc(d.creatorAddress.trim()) !== lc(config.creatorAddress)) {
+          if (!isAddr(d.creatorAddress)) throw new Error("Creator address is not a valid address");
+          if (!canChange(config.creatorAddress, req)) refused.push("creatorAddress");
+          else {
+            config.creatorAddress = ethers.getAddress(d.creatorAddress.trim());
+            log("info", `[CONFIG] Creator set: ${config.creatorAddress}`);
+          }
+        }
         if (typeof d.privateKey === "string" && d.privateKey.trim()) {
           if (!canChange(config.privateKey, req)) refused.push("privateKey");
           else {
@@ -948,7 +969,7 @@ const server = http.createServer((req, res) => {
           error: refused.length ? `Needs the admin secret: ${refused.join(", ")}. Paste ADMIN_SECRET from the server .env.` : undefined,
           tokenAddress: config.tokenAddress,
           treasuryAddress: config.treasuryAddress,
-          walletAddress: wallet?.address || "",
+          walletAddress: creator(),
         });
       } catch (e: any) {
         return send(res, 400, { success: false, error: e.message });

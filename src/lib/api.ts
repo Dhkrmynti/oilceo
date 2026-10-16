@@ -6,6 +6,8 @@ export interface Status {
   online: boolean;
   status: string;
   walletAddress: string;
+  /** false when the engine runs with AUTOMATION=0: the reserve is read and shown, nothing is claimed or paid. */
+  automation?: boolean;
   tokenAddress: string;
   curveAddress: string;
   treasuryAddress: string;
