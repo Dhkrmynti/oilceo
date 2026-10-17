@@ -1,5 +1,6 @@
 import { Composition, Folder, Still } from "remotion";
 import { MeetingLoop } from "./oil/Gif";
+import { PostBoardNow, PostEmbargoed, PostInOffice, PostLatestBarrel } from "./oil/Live";
 import { Demo, SceneBarrels, SceneBreaking, SceneEmbargo, SceneEnd, SceneMeeting, ScenePromoted, SceneReserve } from "./oil/Demo";
 import { Banner, Logo } from "./oil/Stills";
 
@@ -21,6 +22,12 @@ export const RemotionRoot: React.FC = () => {
       </Folder>
       {/* 990 frames of scenes minus six 12-frame fades = 918 */}
       <Composition id="Demo" component={Demo} width={1920} height={1080} fps={30} durationInFrames={918} />
+      <Folder name="Live">
+        <Still id="PostInOffice" component={PostInOffice} width={1080} height={1350} />
+        <Still id="PostEmbargoed" component={PostEmbargoed} width={1080} height={1350} />
+        <Still id="PostLatestBarrel" component={PostLatestBarrel} width={1080} height={1350} />
+        <Still id="PostBoardNow" component={PostBoardNow} width={1080} height={1350} />
+      </Folder>
       <Folder name="Posts">
         <Composition id="MeetingGif" component={MeetingLoop} width={600} height={600} fps={30} durationInFrames={120} />
       </Folder>
