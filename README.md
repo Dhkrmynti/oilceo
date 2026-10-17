@@ -38,7 +38,7 @@ draws the same card as the link preview of `/barrel/<n>` and of the site (`/api/
 ## Not done yet
 
 - **No buyback.** The concept allows one "per the contract's rules"; this engine has none (see `CONCEPT.md`).
-- No token, domain, X account or server yet. `X_URL` in `src/lib/api.ts` is empty. `public/terms.html`
+- No token yet. Live at https://oilceo.fun (VPS, port 5080), X: https://x.com/oilceorh. `public/terms.html`
   and `public/privacy.html` say `your-domain.example`.
 - Not tested against a live token yet: the buy detection should be checked on the first real buys.
 
